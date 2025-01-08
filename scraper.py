@@ -1,10 +1,10 @@
+import csv
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 import time
-import requests
-from bs4 import BeautifulSoup
 
 
 def init_driver():
@@ -14,16 +14,30 @@ def init_driver():
     return driver
 
 
-def scrape_linkedin_jobs(url):
+def save_to_csv(jobs, filename):
+    """Save a list of jobs to a CSV file."""
+    keys = jobs[0].keys() if jobs else []
+    with open(filename, mode="w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=keys)
+        writer.writeheader()
+        writer.writerows(jobs)
+
+
+def scrape_linkedin_jobs(url, num_jobs=1000, batch_size=1000):
     driver = init_driver()
     driver.get(url)
     jobs = []
+    batch_counter = 0
 
     try:
-        for i in range(5):  # Scroll and load more jobs
+        while len(jobs) + batch_counter*batch_size < num_jobs:  # Stop when the desired number of jobs is reached
             job_cards = driver.find_elements(By.CSS_SELECTOR, ".job-search-card")
 
             for job_card in job_cards:
+
+                if len(jobs) + batch_counter*batch_size >= num_jobs:  # Check again inside the loop
+                    break
+
                 ActionChains(driver).move_to_element(job_card).click().perform()
                 time.sleep(1)  # Wait for job details to load
 
@@ -32,42 +46,12 @@ def scrape_linkedin_jobs(url):
                     title = driver.find_element(By.CSS_SELECTOR, ".topcard__title").text
                     company = driver.find_element(By.CSS_SELECTOR, ".topcard__org-name-link").text
                     location = driver.find_element(By.CSS_SELECTOR, ".topcard__flavor--bullet").text
-                    applicants = driver.find_element(By.CSS_SELECTOR, "figcaption.num-applicants__caption").text  # Example: "Be among the first 25 applicants"
+                    applicants = driver.find_element(By.CSS_SELECTOR, "figcaption.num-applicants__caption").text
                     time_posted = driver.find_element(By.XPATH,
                                                       "//span[contains(@class, 'posted-time-ago__text')]").text
-                    # seniority_level = driver.find_element(By.XPATH,
-                    #                                       "//span[text()='Seniority level']/following-sibling::span").text
-                    # employment_type = driver.find_element(By.XPATH,
-                    #                                       "//span[text()='Employment type']/following-sibling::span").text
-                    # job_function = driver.find_element(By.XPATH,
-                    #                                    "//span[text()='Job function']/following-sibling::span").text
-                    # industries = driver.find_element(By.XPATH,
-                    #                                  "//span[text()='Industries']/following-sibling::span").text
-
-                    # description = driver.find_element(By.XPATH, "//div[contains(@class, 'show-more-less-html__markup relative overflow-hidden show-more-less-html__markup--clamp-after-5')]").text
 
                     description = driver.find_element(By.CSS_SELECTOR, ".show-more-less-html__markup").text
-                    # seniority_level = driver.find_element(By.XPATH,
-                    #                                       "//h3[text()='Seniority level']/following-sibling::span").text
-                    # employment_type = driver.find_element(By.XPATH,
-                    #                                       "//h3[text()='Employment type']/following-sibling::span").text
-                    # job_function = driver.find_element(By.XPATH,
-                    #                                    "//h3[text()='Job function']/following-sibling::span").text
-                    # industries = driver.find_element(By.XPATH,
-                    #                                  "//h3[text()='Industries']/following-sibling::span").text
 
-                    # Extract Seniority Level
-                    # seniority_level = driver.find_element(By.XPATH, "//ul/li[h3[text()='Seniority level']]/span").text
-                    # # Extract Employment Type
-                    # employment_type = driver.find_element(By.XPATH,
-                    #                                       "//h3[text()='Employment type']/following-sibling::span").text
-                    #
-                    # # Extract Job Function
-                    # job_function = driver.find_element(By.XPATH,
-                    #                                    "//h3[text()='Job function']/following-sibling::span").text
-                    #
-                    # # Extract Industries
-                    # industries = driver.find_element(By.XPATH, "//h3[text()='Industries']/following-sibling::span").text
                     seniority_level = driver.find_element(By.XPATH,
                                                           "//li[h3[contains(text(), 'Seniority level')]]/span").text
                     employment_type = driver.find_element(By.XPATH, "//li[h3[contains(text(), 'Employment type')]]/span").text
@@ -86,50 +70,54 @@ def scrape_linkedin_jobs(url):
                         "industries": industries,
                         "description": description,
                     })
-                    print(jobs[-1])
+
                 except Exception as e:
                     print(f"Error extracting job details: {e}")
 
                 time.sleep(2)
 
-            # Scroll down to load more jobs
+                # Save progress every batch_size jobs
+                if len(jobs) % batch_size == 0:
+                    batch_counter += 1
+                    batch_filename = f"jobs_batch_{batch_counter}.csv"
+                    save_to_csv(jobs[-batch_size:], batch_filename)
+                    print(f"Saved batch {batch_counter} to {batch_filename}")
+
+            # Scroll down to load more jobs if needed
             driver.find_element(By.TAG_NAME, "body").send_keys(Keys.END)
             time.sleep(10)  # Wait for more jobs to load
 
     except KeyboardInterrupt:
         print("Scraping stopped.")
     finally:
+        # Save remaining jobs
+        if jobs:
+            batch_counter += 1
+            batch_filename = f"jobs_batch_{batch_counter}.csv"
+            save_to_csv(jobs[-(len(jobs) % batch_size):], batch_filename)
+            print(f"Saved remaining jobs to {batch_filename}")
         driver.quit()
         return jobs
 
 
-def get_html(url):
-    try:
-        # Set headers to mimic a browser
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-        # Send a GET request with headers
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()  # Raise HTTPError for bad responses
-        html_content = response.text
-    except requests.exceptions.RequestException as e:
-        print(f"An error occurred: {e}")
-        html_content = None
+def consolidate_csv(output_filename):
+    """Combine all batch CSV files into a single CSV."""
+    all_files = [f for f in os.listdir() if f.startswith("jobs_batch_") and f.endswith(".csv")]
+    all_jobs = []
 
-    if html_content:
-        print("HTML content fetched successfully.")
-        # Save the HTML to a file
-        with open("website.html", "w", encoding="utf-8") as file:
-            file.write(html_content)
-        print("HTML content saved to 'website.html'.")
+    for file in all_files:
+        with open(file, mode="r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            all_jobs.extend(list(reader))
+
+    # Save all jobs to a single CSV
+    if all_jobs:
+        save_to_csv(all_jobs, output_filename)
+        print(f"Consolidated all batches into {output_filename}")
+
 
 # Usage
 if __name__ == "__main__":
-    # get_html("https://www.linkedin.com/jobs/search?trk=guest_homepage-basic_guest_nav_menu_jobs&position=1&pageNum=0&currentJobId=4119711273")
-
     linkedin_jobs_url = "https://www.linkedin.com/jobs/search?keywords=Software%20Engineer&location=United%20States"
-    jobs_data = scrape_linkedin_jobs(linkedin_jobs_url)
-    print(f"Scraped {len(jobs_data)} jobs.")
-    for job in jobs_data[:5]:  # Print the first 5 jobs
-        print(job)
+    scrape_linkedin_jobs(linkedin_jobs_url, num_jobs=22, batch_size=5)  # Scrape up to 5,000 jobs in batches
+    consolidate_csv("all_jobs.csv")  # Consolidate all batches into one file
