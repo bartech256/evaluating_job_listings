@@ -20,7 +20,7 @@ def scrape_linkedin_jobs(url):
     jobs = []
 
     try:
-        while True:  # Scroll and load more jobs
+        for i in range(5):  # Scroll and load more jobs
             job_cards = driver.find_elements(By.CSS_SELECTOR, ".job-search-card")
 
             for job_card in job_cards:
@@ -35,17 +35,44 @@ def scrape_linkedin_jobs(url):
                     applicants = driver.find_element(By.CSS_SELECTOR, "figcaption.num-applicants__caption").text  # Example: "Be among the first 25 applicants"
                     time_posted = driver.find_element(By.XPATH,
                                                       "//span[contains(@class, 'posted-time-ago__text')]").text
+                    # seniority_level = driver.find_element(By.XPATH,
+                    #                                       "//span[text()='Seniority level']/following-sibling::span").text
+                    # employment_type = driver.find_element(By.XPATH,
+                    #                                       "//span[text()='Employment type']/following-sibling::span").text
+                    # job_function = driver.find_element(By.XPATH,
+                    #                                    "//span[text()='Job function']/following-sibling::span").text
+                    # industries = driver.find_element(By.XPATH,
+                    #                                  "//span[text()='Industries']/following-sibling::span").text
 
-                    description = driver.find_element(By.CSS_SELECTOR, ".description__text").text # show-more-less-html__markup relative overflow-hidden show-more-less-html__markup--clamp-after-5
+                    # description = driver.find_element(By.XPATH, "//div[contains(@class, 'show-more-less-html__markup relative overflow-hidden show-more-less-html__markup--clamp-after-5')]").text
 
+                    description = driver.find_element(By.CSS_SELECTOR, ".show-more-less-html__markup").text
+                    # seniority_level = driver.find_element(By.XPATH,
+                    #                                       "//h3[text()='Seniority level']/following-sibling::span").text
+                    # employment_type = driver.find_element(By.XPATH,
+                    #                                       "//h3[text()='Employment type']/following-sibling::span").text
+                    # job_function = driver.find_element(By.XPATH,
+                    #                                    "//h3[text()='Job function']/following-sibling::span").text
+                    # industries = driver.find_element(By.XPATH,
+                    #                                  "//h3[text()='Industries']/following-sibling::span").text
+
+                    # Extract Seniority Level
+                    # seniority_level = driver.find_element(By.XPATH, "//ul/li[h3[text()='Seniority level']]/span").text
+                    # # Extract Employment Type
+                    # employment_type = driver.find_element(By.XPATH,
+                    #                                       "//h3[text()='Employment type']/following-sibling::span").text
+                    #
+                    # # Extract Job Function
+                    # job_function = driver.find_element(By.XPATH,
+                    #                                    "//h3[text()='Job function']/following-sibling::span").text
+                    #
+                    # # Extract Industries
+                    # industries = driver.find_element(By.XPATH, "//h3[text()='Industries']/following-sibling::span").text
                     seniority_level = driver.find_element(By.XPATH,
-                                                          "//h3[text()='Seniority level']/following-sibling::span").text
-                    employment_type = driver.find_element(By.XPATH,
-                                                          "//h3[text()='Employment type']/following-sibling::span").text
-                    job_function = driver.find_element(By.XPATH,
-                                                       "//h3[text()='Job function']/following-sibling::span").text
-                    industries = driver.find_element(By.XPATH,
-                                                     "//h3[text()='Industries']/following-sibling::span").text
+                                                          "//li[h3[contains(text(), 'Seniority level')]]/span").text
+                    employment_type = driver.find_element(By.XPATH, "//li[h3[contains(text(), 'Employment type')]]/span").text
+                    job_function = driver.find_element(By.XPATH, "//li[h3[contains(text(), 'Job function')]]/span").text
+                    industries = driver.find_element(By.XPATH, "//li[h3[contains(text(), 'Industries')]]/span").text
 
                     jobs.append({
                         "title": title,
@@ -59,12 +86,15 @@ def scrape_linkedin_jobs(url):
                         "industries": industries,
                         "description": description,
                     })
+                    print(jobs[-1])
                 except Exception as e:
                     print(f"Error extracting job details: {e}")
 
+                time.sleep(2)
+
             # Scroll down to load more jobs
             driver.find_element(By.TAG_NAME, "body").send_keys(Keys.END)
-            time.sleep(2)  # Wait for more jobs to load
+            time.sleep(10)  # Wait for more jobs to load
 
     except KeyboardInterrupt:
         print("Scraping stopped.")
