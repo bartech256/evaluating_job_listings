@@ -75,6 +75,6 @@ this code was written during the course "Data Gathering and Management Lab" in t
 <br>
 the finished product was this code and a poster:
 <p align="center">
-  <img src="Assets/poster.png" alt="poster" width="600" height="800">
+  <img src="Assets/poster.jpeg" alt="poster" width="600" height="800">
 
 
