@@ -3,7 +3,7 @@
 
 <p align='center' style="text-align:center;font-size:1em;">
     <a href="https://github.com/bar256">Bar Oren</a>&nbsp;,&nbsp;
-    <a href="https://github.com/bar256">Sivan Maspin</a>&nbsp;,&nbsp;
+    <a href="https://github.com/sivanmaspin">Sivan Maspin</a>&nbsp;,&nbsp;
     <a>Yuval Rains</a>&nbsp;,&nbsp;
     <br/> 
     Technion - Israel Institute of Technology
