@@ -3,8 +3,8 @@
 
 <p align='center' style="text-align:center;font-size:1em;">
     <a href="https://github.com/bar256">Bar Oren</a>&nbsp;,&nbsp;
-    <a>Sivan Maspin</a>&nbsp;,&nbsp;
-    <a>Yuval Raines</a>&nbsp;,&nbsp;
+    <a href="https://github.com/sivanmaspin">Sivan Maspin</a>&nbsp;,&nbsp;
+    <a>Yuval Rains</a>&nbsp;,&nbsp;
     <br/> 
     Technion - Israel Institute of Technology
 
@@ -13,7 +13,7 @@
 <br>
 
 <p align="center">
-  <img src="Assets/Icon.png" alt="Logo" width="300" height="200">
+  <img src="Assets/Icon.png" alt="Logo" width="1000" height="400">
 
 
 
